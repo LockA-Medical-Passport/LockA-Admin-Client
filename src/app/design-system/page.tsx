@@ -95,7 +95,12 @@ export default function DesignSystemPreview() {
   }
 
   return (
-    <AppShell adminName="reviewer@locka.health" onLogout={() => toast.success("Logged out")}>
+    <AppShell
+      adminName="reviewer@locka.health"
+      onLogout={() => {
+        toast.success("Logged out");
+      }}
+    >
       <div className="mx-auto flex max-w-5xl flex-col gap-8 pb-16">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Design System Preview</h1>
