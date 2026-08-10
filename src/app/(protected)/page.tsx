@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-16 text-center">
       <h1 className="text-2xl font-semibold text-foreground">LockA Admin Client</h1>
       <p className="max-w-md text-sm text-foreground/70">
         Scaffold in progress — see{" "}
