@@ -13,6 +13,7 @@ import {
   Spinner,
   Table,
   Textarea,
+  dismissToast,
   toast,
   type TableColumn,
 } from "@/components/ui";
@@ -244,6 +245,21 @@ export default function DesignSystemPreview() {
               }
             >
               Trigger error toast
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const id = toast.pending("Submitting approval to the ProviderRegistry…");
+                setTimeout(() => {
+                  dismissToast(id);
+                  toast.success("Provider approved", {
+                    title: "Transaction confirmed",
+                    txHash: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+                  });
+                }, 2000);
+              }}
+            >
+              Trigger pending → success
             </Button>
           </div>
         </Section>

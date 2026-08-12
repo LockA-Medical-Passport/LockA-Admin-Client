@@ -2,7 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { shortTxHash, stellarTxUrl } from "@/lib/stellar";
 import { cn } from "@/lib/utils";
+import { Spinner } from "./Spinner";
 import {
   dismissToast,
   getToastSnapshot,
@@ -14,16 +16,14 @@ import {
 const VARIANT_STYLES: Record<ToastVariant, string> = {
   success: "border-brand-green/30",
   error: "border-brand-red/30",
+  pending: "border-locka-cyan/30",
 };
 
 const VARIANT_ICON_COLOR: Record<ToastVariant, string> = {
   success: "text-brand-green",
   error: "text-brand-red",
+  pending: "text-locka-cyan",
 };
-
-function explorerTxUrl(txHash: string) {
-  return `https://stellar.expert/explorer/testnet/tx/${txHash}`;
-}
 
 function emptyToastList(): ToastItem[] {
   return [];
@@ -63,12 +63,12 @@ function ToastCard({ item }: { item: ToastItem }) {
         <p className="text-sm text-foreground/80">{item.message}</p>
         {item.txHash && (
           <a
-            href={explorerTxUrl(item.txHash)}
+            href={stellarTxUrl(item.txHash)}
             target="_blank"
             rel="noreferrer"
             className="mt-1 inline-block font-mono text-xs text-locka-cyan hover:underline"
           >
-            {item.txHash.slice(0, 8)}…{item.txHash.slice(-6)}
+            {shortTxHash(item.txHash)}
           </a>
         )}
       </div>
@@ -93,6 +93,10 @@ function ToastCard({ item }: { item: ToastItem }) {
 }
 
 function StatusIcon({ variant }: { variant: ToastVariant }) {
+  if (variant === "pending") {
+    return <Spinner size="sm" className={cn("mt-0.5 shrink-0", VARIANT_ICON_COLOR.pending)} />;
+  }
+
   return (
     <svg
       viewBox="0 0 20 20"

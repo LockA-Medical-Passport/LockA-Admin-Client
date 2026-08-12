@@ -1,5 +1,5 @@
 import "server-only";
-import { config } from "@/lib/config";
+import { LockaApiError, lockaApiJson, withAuth, type LockaApiRequestInit } from "@/lib/locka-api";
 import type { AdminProfile, AdminRole, AdminUser } from "./types";
 
 /**
@@ -16,42 +16,14 @@ import type { AdminProfile, AdminRole, AdminUser } from "./types";
  *   PATCH  /admin/users/:id/role      (Bearer token) { role }     -> AdminUser
  */
 
-export class AuthApiError extends Error {
-  status: number;
+/** Alias kept so auth callers keep catching an auth-named error (same class as everywhere else). */
+export { LockaApiError as AuthApiError };
 
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "AuthApiError";
-    this.status = status;
-  }
-}
-
-async function lockaApiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(`${config.lockaApiUrl}${path}`, {
-      ...init,
-      headers: { "Content-Type": "application/json", ...init?.headers },
-      cache: "no-store",
-    });
-  } catch {
-    throw new AuthApiError("Unable to reach the authentication service", 502);
-  }
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new AuthApiError(
-      body?.message ?? `locka-api request failed with status ${response.status}`,
-      response.status,
-    );
-  }
-
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
-}
-
-function withAuth(token: string, init?: RequestInit): RequestInit {
-  return { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } };
+function lockaApiFetch<T>(path: string, init?: LockaApiRequestInit): Promise<T> {
+  return lockaApiJson<T>(path, {
+    ...init,
+    unreachableMessage: "Unable to reach the authentication service",
+  });
 }
 
 export interface LoginResult {

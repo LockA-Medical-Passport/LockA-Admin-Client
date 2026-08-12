@@ -1,4 +1,4 @@
-export type ToastVariant = "success" | "error";
+export type ToastVariant = "success" | "error" | "pending";
 
 export interface ToastOptions {
   title?: string;
@@ -50,4 +50,10 @@ export function getToastSnapshot() {
 export const toast = {
   success: (message: string, options?: ToastOptions) => addToast("success", message, options),
   error: (message: string, options?: ToastOptions) => addToast("error", message, options),
+  /**
+   * In-flight work (e.g. a ProviderRegistry transaction). Sticky by default: the caller holds
+   * the returned id and calls `dismissToast(id)` when the outcome toast replaces it.
+   */
+  pending: (message: string, options?: ToastOptions) =>
+    addToast("pending", message, { duration: 0, ...options }),
 };
