@@ -25,6 +25,8 @@ export interface TableProps<T> {
   selectable?: boolean;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
+  /** Rows this returns false for get a disabled checkbox and are skipped by select-all. */
+  isRowSelectable?: (row: T) => boolean;
   sortKey?: string;
   sortDirection?: SortDirection;
   onSortChange?: (key: string, direction: SortDirection) => void;
@@ -43,6 +45,7 @@ export function Table<T>({
   selectable = false,
   selectedIds,
   onSelectionChange,
+  isRowSelectable,
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
   onSortChange,
@@ -87,10 +90,14 @@ export function Table<T>({
     }
   }
 
+  const selectableRows = useMemo(
+    () => (isRowSelectable ? rows.filter(isRowSelectable) : rows),
+    [rows, isRowSelectable],
+  );
+
   function toggleAll() {
     if (!onSelectionChange) return;
-    const allSelected = rows.length > 0 && rows.every((row) => selectedIds?.has(getRowId(row)));
-    onSelectionChange(allSelected ? new Set() : new Set(rows.map(getRowId)));
+    onSelectionChange(allSelected ? new Set() : new Set(selectableRows.map(getRowId)));
   }
 
   function toggleRow(id: string) {
@@ -101,8 +108,10 @@ export function Table<T>({
     onSelectionChange(next);
   }
 
-  const allSelected = rows.length > 0 && rows.every((row) => selectedIds?.has(getRowId(row)));
-  const someSelected = !allSelected && rows.some((row) => selectedIds?.has(getRowId(row)));
+  const allSelected =
+    selectableRows.length > 0 && selectableRows.every((row) => selectedIds?.has(getRowId(row)));
+  const someSelected =
+    !allSelected && selectableRows.some((row) => selectedIds?.has(getRowId(row)));
 
   return (
     <div className={cn("glass overflow-x-auto rounded-xl", className)}>
@@ -115,11 +124,12 @@ export function Table<T>({
                   type="checkbox"
                   aria-label="Select all rows"
                   checked={allSelected}
+                  disabled={selectableRows.length === 0}
                   ref={(el) => {
                     if (el) el.indeterminate = someSelected;
                   }}
                   onChange={toggleAll}
-                  className="size-4 rounded border-white/20 bg-navy-800 accent-locka-cyan"
+                  className="size-4 rounded border-white/20 bg-navy-800 accent-locka-cyan disabled:opacity-30"
                 />
               </th>
             )}
@@ -196,8 +206,9 @@ export function Table<T>({
                         type="checkbox"
                         aria-label="Select row"
                         checked={isSelected}
+                        disabled={isRowSelectable ? !isRowSelectable(row) : false}
                         onChange={() => toggleRow(id)}
-                        className="size-4 rounded border-white/20 bg-navy-800 accent-locka-cyan"
+                        className="size-4 rounded border-white/20 bg-navy-800 accent-locka-cyan disabled:opacity-30"
                       />
                     </td>
                   )}
