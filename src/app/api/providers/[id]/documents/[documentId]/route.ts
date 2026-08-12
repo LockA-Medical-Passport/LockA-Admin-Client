@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { LockaApiError } from "@/lib/locka-api";
+import { lockaApiErrorResponse } from "@/lib/locka-api";
 import { requireSession } from "@/features/auth/guard";
 import { fetchProviderDocument } from "@/features/provider-review/api";
 import { canPreviewInline } from "@/features/provider-review/document-preview";
@@ -60,12 +60,6 @@ export async function GET(
 
     return new NextResponse(upstream.body, { headers });
   } catch (error) {
-    if (error instanceof LockaApiError) {
-      return NextResponse.json({ message: error.message }, { status: error.status });
-    }
-    return NextResponse.json(
-      { message: "Unable to reach the provider verification service" },
-      { status: 502 },
-    );
+    return lockaApiErrorResponse(error, "Unable to reach the provider verification service");
   }
 }

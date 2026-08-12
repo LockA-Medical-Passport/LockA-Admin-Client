@@ -1,4 +1,5 @@
 import "server-only";
+import { NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
 /**
@@ -61,4 +62,16 @@ export async function lockaApiJson<T>(path: string, init?: LockaApiRequestInit):
 
 export function withAuth(token: string, init?: LockaApiRequestInit): LockaApiRequestInit {
   return { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } };
+}
+
+/**
+ * Standard `catch (error) { ... }` handler for route handlers wrapping a locka-api call: a
+ * `LockaApiError` carries its own upstream status and message, anything else means locka-api
+ * itself was unreachable.
+ */
+export function lockaApiErrorResponse(error: unknown, unreachableMessage: string): NextResponse {
+  if (error instanceof LockaApiError) {
+    return NextResponse.json({ message: error.message }, { status: error.status });
+  }
+  return NextResponse.json({ message: unreachableMessage }, { status: 502 });
 }

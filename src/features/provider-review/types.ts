@@ -100,8 +100,12 @@ export interface ProviderQueuePage {
 
 export interface ProviderDecisionResult {
   provider: ProviderApplication;
-  /** Present when locka-api submitted a `ProviderRegistry` transaction for this decision. */
-  txHash?: string;
+  /**
+   * The already-confirmed `ProviderRegistry` transaction this decision was recorded against
+   * (signed client-side via Freighter — see `features/provider-review/decisions.ts`). Echoed
+   * back from locka-api mainly so a response type doesn't need a second, separate shape.
+   */
+  txHash: string;
 }
 
 export interface ProviderStaffRevocationResult {
