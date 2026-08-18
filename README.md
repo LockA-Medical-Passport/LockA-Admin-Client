@@ -70,3 +70,8 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 Part of the LockA Medical Passport platform. For full platform/product documentation, see [LockA-Documentation](https://github.com/LockA-Medical-Passport/LockA-Documentation/blob/main/Documentation.md).
+
+
+## Set up Jest + React Testing Library
+
+Documentation reference and guidelines for #55.
