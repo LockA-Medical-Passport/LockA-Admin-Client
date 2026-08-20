@@ -20,17 +20,21 @@ import type {
  *   GET  /admin/providers/:id                                    -> ProviderApplication
  *   GET  /admin/providers/:id/history                            -> ProviderHistoryEntry[]
  *   GET  /admin/providers/:id/staff                              -> ProviderStaff[]
- *   GET  /admin/providers/:id/documents/:documentId              -> raw document bytes
- *   POST /admin/providers/:id/decision { action, reason? }       -> ProviderDecisionResult
- *   POST /admin/providers/:id/staff/:staffId/revoke { reason? }  -> ProviderStaffRevocationResult
+ *   GET  /admin/providers/:id/documents/:documentId                       -> raw document bytes
+ *   POST /admin/providers/:id/decision { action, reason?, txHash }        -> ProviderDecisionResult
+ *   POST /admin/providers/:id/staff/:staffId/revoke { reason? }           -> ProviderStaffRevocationResult
  *
  * Filtering, sorting and pagination are pushed to locka-api rather than done here: the queue
  * is expected to grow, and the admin client should never pull the full table to show 25 rows.
  *
- * The `ProviderRegistry` write behind a decision is locka-api's for now, and it returns the
- * Stellar transaction hash so the UI can link to it. Signing that transaction from the
- * admin's own Freighter wallet is the Blockchain/Soroban epic's job and will replace the
- * `txHash` plumbing here, not the endpoints.
+ * The `ProviderRegistry` write behind a decision is signed and submitted client-side, by the
+ * admin's own Freighter wallet, via `lib/soroban/provider-registry.ts` — locka-api never holds
+ * a key that could write to the registry. This endpoint's `decision` call happens *after* that
+ * transaction has already confirmed on-chain; `txHash` identifies it, and locka-api's job here
+ * is just to record the reason/note against it (see `features/provider-review/decisions.ts`).
+ * The authoritative on-chain status locka-api reports back (`onChainStatus`/`lastTxHash` on
+ * `ProviderApplication`) still comes from its own `ProviderRegistry` event indexer, not from
+ * this call — that's what keeps the queue honest even for writes made outside this client.
  */
 
 const UNREACHABLE = "Unable to reach the provider verification service";
@@ -78,7 +82,7 @@ export function getProviderStaff(token: string, id: string): Promise<ProviderSta
 export function submitProviderDecision(
   token: string,
   id: string,
-  input: { action: DecisionAction; reason?: string },
+  input: { action: DecisionAction; reason?: string; txHash: string },
 ): Promise<ProviderDecisionResult> {
   return providerApiJson<ProviderDecisionResult>(
     `/admin/providers/${encodeURIComponent(id)}/decision`,

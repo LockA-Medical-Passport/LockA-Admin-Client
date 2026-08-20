@@ -1,3 +1,5 @@
+import { truncateMiddle } from "./utils";
+
 /**
  * Explorer links for Stellar transactions written by ProviderRegistry decisions.
  *
@@ -14,5 +16,5 @@ export function stellarTxUrl(txHash: string): string {
 
 /** Short form used in tables and timelines, e.g. `a1b2c3d4…e7f8a9`. */
 export function shortTxHash(txHash: string): string {
-  return txHash.length > 16 ? `${txHash.slice(0, 8)}…${txHash.slice(-6)}` : txHash;
+  return truncateMiddle(txHash, 8, 6);
 }

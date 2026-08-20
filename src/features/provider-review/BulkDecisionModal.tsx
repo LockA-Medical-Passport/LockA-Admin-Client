@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Badge, Button, Modal, Textarea, toast } from "@/components/ui";
-import { submitBulkDecision, withPendingToast } from "./decisions";
+import { useWallet } from "@/features/auth/WalletContext";
+import { runBulkDecision, type BulkDecisionProgress, type DecisionProgress } from "./decisions";
+import { TransactionStatus } from "./TransactionStatus";
+import { WalletConnectPrompt } from "./WalletConnectPrompt";
 import { DECISION_COPY, type DecisionAction } from "./status";
 import type { BulkDecisionResult, ProviderApplication } from "./types";
 
@@ -11,15 +14,17 @@ export interface BulkDecisionModalProps {
   action: DecisionAction | null;
   providers: ProviderApplication[];
   onClose: () => void;
-  /** Called once the admin dismisses the result summary, so the caller can refresh the queue. */
-  onCompleted: () => void;
+  /** Called once the admin dismisses the result summary, with every item's outcome. */
+  onCompleted: (results: BulkDecisionResult[]) => void;
 }
 
 const PREVIEW_LIMIT = 5;
 
+type Stage = "confirm" | "running" | "results";
+
 /**
  * Rendered with `key={action}` by its caller, so opening a new bulk action always mounts a
- * fresh instance instead of carrying over the previous action's reason/error/results state.
+ * fresh instance instead of carrying over the previous action's reason/error/progress state.
  */
 export function BulkDecisionModal({
   action,
@@ -27,15 +32,21 @@ export function BulkDecisionModal({
   onClose,
   onCompleted,
 }: BulkDecisionModalProps) {
+  const wallet = useWallet();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<BulkDecisionResult[] | null>(null);
+  const [stage, setStage] = useState<Stage>("confirm");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentProgress, setCurrentProgress] = useState<DecisionProgress>({ phase: "idle" });
+  const [results, setResults] = useState<BulkDecisionResult[]>([]);
+  const nameById = useMemo(
+    () => new Map(providers.map((provider) => [provider.id, provider.name])),
+    [providers],
+  );
 
   if (!action) return null;
 
   const copy = DECISION_COPY[action];
-  const nameById = new Map(providers.map((provider) => [provider.id, provider.name]));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,27 +57,30 @@ export function BulkDecisionModal({
       setError(`A ${copy.label.toLowerCase()} reason is required`);
       return;
     }
-
-    setLoading(true);
-    setError(null);
-
-    const ids = providers.map((provider) => provider.id);
-    const result = await withPendingToast(
-      `${copy.pendingMessage} (${ids.length} applications)`,
-      () => submitBulkDecision(ids, action, trimmedReason || undefined),
-    );
-
-    setLoading(false);
-
-    if (!result.ok) {
-      setError(result.message);
-      toast.error(result.message, { title: `Bulk ${copy.label.toLowerCase()} failed` });
+    if (!wallet.publicKey) {
+      setError("Connect your Freighter wallet to submit these decisions on-chain.");
       return;
     }
 
-    const succeeded = result.data.results.filter((entry) => entry.ok).length;
-    const failed = result.data.results.length - succeeded;
-    setResults(result.data.results);
+    setError(null);
+    setStage("running");
+
+    const outcome = await runBulkDecision(
+      providers,
+      action,
+      trimmedReason || undefined,
+      wallet,
+      (update: BulkDecisionProgress) => {
+        setCurrentIndex(update.index);
+        setCurrentProgress(update.progress);
+      },
+    );
+
+    setResults(outcome);
+    setStage("results");
+
+    const succeeded = outcome.filter((entry) => entry.ok).length;
+    const failed = outcome.length - succeeded;
 
     if (failed === 0) {
       toast.success(`${succeeded} ${succeeded === 1 ? "application" : "applications"} updated`, {
@@ -80,11 +94,32 @@ export function BulkDecisionModal({
   }
 
   function handleDone() {
-    onCompleted();
+    onCompleted(results);
   }
 
-  if (results) {
+  if (stage === "running") {
+    const current = providers[currentIndex];
+    return (
+      // Dismissal is intentionally disabled here: closing mid-loop would leave some
+      // applications decided and others not, with no way to resume or cancel cleanly.
+      <Modal open onClose={() => undefined} title={`${copy.label} in progress…`}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-foreground/70">
+            Application {currentIndex + 1} of {providers.length} — confirm each request in Freighter
+            as it appears. Don&apos;t close this window.
+          </p>
+          <p className="truncate text-sm font-medium text-foreground">{current?.name}</p>
+          <TransactionStatus progress={currentProgress} />
+        </div>
+      </Modal>
+    );
+  }
+
+  if (stage === "results") {
     const failures = results.filter((entry) => !entry.ok);
+    // Confirmed on-chain, but the off-chain reason/note failed to save — not a failure, but
+    // worth the admin's attention rather than blending in with a clean success.
+    const warnings = results.filter((entry) => entry.ok && entry.message);
     const succeeded = results.length - failures.length;
 
     return (
@@ -100,7 +135,7 @@ export function BulkDecisionModal({
             {failures.length > 0 && <Badge variant="red">{failures.length} failed</Badge>}
           </div>
 
-          {failures.length > 0 && (
+          {(failures.length > 0 || warnings.length > 0) && (
             <ul className="flex max-h-64 flex-col gap-2 overflow-y-auto">
               {failures.map((failure) => (
                 <li
@@ -111,6 +146,17 @@ export function BulkDecisionModal({
                     {failure.name ?? nameById.get(failure.id) ?? failure.id}
                   </p>
                   <p className="text-xs text-foreground/60">{failure.message}</p>
+                </li>
+              ))}
+              {warnings.map((warning) => (
+                <li
+                  key={warning.id}
+                  className="rounded-lg border border-brand-amber/25 bg-brand-amber/5 px-3 py-2"
+                >
+                  <p className="text-sm font-medium text-foreground">
+                    {warning.name ?? nameById.get(warning.id) ?? warning.id}
+                  </p>
+                  <p className="text-xs text-foreground/60">{warning.message}</p>
                 </li>
               ))}
             </ul>
@@ -131,8 +177,9 @@ export function BulkDecisionModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-sm text-foreground/70">
-            Each application is submitted separately — if one fails, the rest still go through and
-            you get a per-application summary.
+            Soroban only allows one contract call per transaction, so each application is signed and
+            submitted separately — you&apos;ll confirm each one in Freighter in turn. If one fails,
+            the rest still go through and you get a per-application summary.
           </p>
           <ul className="flex flex-col gap-1 text-sm text-foreground/80">
             {preview.map((provider) => (
@@ -146,6 +193,8 @@ export function BulkDecisionModal({
           </ul>
         </div>
 
+        <WalletConnectPrompt wallet={wallet} subject="these decisions" />
+
         <Textarea
           label={`${copy.reasonLabel}${copy.requiresReason ? " — applied to all" : ""}`}
           placeholder={copy.reasonPlaceholder}
@@ -157,10 +206,10 @@ export function BulkDecisionModal({
         />
 
         <div className="mt-2 flex justify-end gap-3">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant={copy.buttonVariant} loading={loading}>
+          <Button type="submit" variant={copy.buttonVariant} disabled={!wallet.publicKey}>
             {copy.label} {providers.length}
           </Button>
         </div>

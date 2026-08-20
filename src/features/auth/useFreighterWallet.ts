@@ -2,15 +2,20 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "@/components/ui";
-import { connectFreighter } from "./freighter";
+import { errorMessage } from "@/lib/utils";
+import { connectFreighter, signFreighterTransaction } from "./freighter";
 
 export type WalletStatus = "idle" | "connecting" | "connected";
+
+export type SignTransactionResult = { ok: true; signedXdr: string } | { ok: false; error: string };
 
 export interface FreighterWallet {
   publicKey: string | null;
   status: WalletStatus;
   connect: () => Promise<void>;
   disconnect: () => void;
+  /** Requests a Freighter signature for a transaction built against this app's configured network. */
+  signTransaction: (unsignedXdr: string) => Promise<SignTransactionResult>;
 }
 
 export function useFreighterWallet(): FreighterWallet {
@@ -54,5 +59,25 @@ export function useFreighterWallet(): FreighterWallet {
     setStatus("idle");
   }, []);
 
-  return { publicKey, status, connect, disconnect };
+  const signTransaction = useCallback(
+    async (unsignedXdr: string): Promise<SignTransactionResult> => {
+      if (!publicKey) return { ok: false, error: "Connect your wallet first." };
+
+      try {
+        const result = await signFreighterTransaction(unsignedXdr, publicKey);
+        if (result.error || !result.signedXdr) {
+          return {
+            ok: false,
+            error: result.error ?? "Freighter did not return a signed transaction.",
+          };
+        }
+        return { ok: true, signedXdr: result.signedXdr };
+      } catch (error) {
+        return { ok: false, error: errorMessage(error) };
+      }
+    },
+    [publicKey],
+  );
+
+  return { publicKey, status, connect, disconnect, signTransaction };
 }

@@ -11,8 +11,9 @@ import { QueueFilters } from "./QueueFilters";
 import { QueuePagination } from "./QueuePagination";
 import { formatDate } from "./format";
 import { queueHref, queueSearchParams, type QueueQuery, type QueueSortKey } from "./query";
-import { PROVIDER_TYPE_LABEL, type DecisionAction } from "./status";
-import type { ProviderApplication, ProviderQueuePage } from "./types";
+import { markPendingSync } from "./sync-store";
+import { DECISION_COPY, PROVIDER_TYPE_LABEL, type DecisionAction } from "./status";
+import type { BulkDecisionResult, ProviderApplication, ProviderQueuePage } from "./types";
 
 export interface ProviderQueueViewProps {
   page: ProviderQueuePage;
@@ -40,10 +41,16 @@ export function ProviderQueueView({ page, query }: ProviderQueueViewProps) {
     [query, router],
   );
 
-  // Selection is scoped to what is on screen, so a stale id from a previous page can never be
-  // swept into a bulk action the admin can't see.
+  // Selection is scoped to what is on screen and still pending, so neither a stale id from a
+  // previous page nor a row whose status changed server-side since it was checked (e.g. another
+  // admin decided it moments ago) can be swept into a bulk action the admin didn't knowingly
+  // choose. The checkbox itself reflects this: such a row shows unchecked, since it's genuinely
+  // excluded from the action.
   const selectedProviders = useMemo(
-    () => page.items.filter((provider) => selectedIds.has(provider.id)),
+    () =>
+      page.items.filter(
+        (provider) => selectedIds.has(provider.id) && isPendingApplication(provider),
+      ),
     [page.items, selectedIds],
   );
 
@@ -182,7 +189,16 @@ export function ProviderQueueView({ page, query }: ProviderQueueViewProps) {
         action={bulkAction}
         providers={selectedProviders}
         onClose={() => setBulkAction(null)}
-        onCompleted={() => {
+        onCompleted={(results: BulkDecisionResult[]) => {
+          // Same eventual-consistency marker the single-decision flow sets, so visiting one of
+          // these providers' detail pages shows "syncing" rather than a stale mismatch.
+          if (bulkAction) {
+            const expectedStatus = DECISION_COPY[bulkAction].resultingStatus;
+            for (const result of results) {
+              if (result.ok && result.txHash)
+                markPendingSync(result.id, result.txHash, expectedStatus);
+            }
+          }
           setBulkAction(null);
           clearSelection();
           router.refresh();

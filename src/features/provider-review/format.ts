@@ -1,3 +1,5 @@
+export { truncateMiddle } from "@/lib/utils";
+
 /**
  * Every timestamp is rendered in UTC with a fixed locale: these components render on the
  * server and hydrate on the client, and a server/browser timezone difference would produce a
@@ -37,11 +39,6 @@ export function formatDate(value: string | null | undefined): string {
 export function formatDateTime(value: string | null | undefined): string {
   const date = parseDate(value);
   return date ? `${DATE_TIME_FORMAT.format(date)} UTC` : EMPTY_VALUE;
-}
-
-/** Keeps long hashes and Stellar addresses readable without hiding which value it is. */
-export function truncateMiddle(value: string, lead = 8, tail = 6): string {
-  return value.length > lead + tail + 1 ? `${value.slice(0, lead)}…${value.slice(-tail)}` : value;
 }
 
 export function formatBytes(bytes: number | undefined): string | undefined {

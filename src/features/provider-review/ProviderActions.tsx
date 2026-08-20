@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import { DecisionModal } from "./DecisionModal";
+import { markPendingSync } from "./sync-store";
 import { DECISION_COPY, availableDecisions, decisionLabel, type DecisionAction } from "./status";
 import type { ProviderApplication } from "./types";
 
@@ -37,7 +38,14 @@ export function ProviderActions({ provider }: { provider: ProviderApplication })
         provider={provider}
         action={action}
         onClose={() => setAction(null)}
-        onDecided={() => {
+        onDecided={(txHash) => {
+          if (action) {
+            // The write is confirmed on-chain now, but locka-api's own indexer (the source of
+            // truth for `onChainStatus`) hasn't necessarily caught up yet — this marks the
+            // provider as "waiting to sync" until a refresh shows it, per the eventual
+            // consistency requirement in the Blockchain/Soroban epic.
+            markPendingSync(provider.id, txHash, DECISION_COPY[action].resultingStatus);
+          }
           setAction(null);
           // Re-renders the server component so status, history and on-chain state all reflect
           // the decision rather than being patched piecemeal on the client.

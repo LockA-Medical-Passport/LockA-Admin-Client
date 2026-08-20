@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { shortTxHash, stellarTxUrl } from "@/lib/stellar";
 import { DocumentViewer } from "./DocumentViewer";
+import { OnChainSyncStatus } from "./OnChainSyncStatus";
 import { DetailField, SectionCard } from "./SectionCard";
 import { ProviderActions } from "./ProviderActions";
 import { ProviderStatusBadge } from "./ProviderStatusBadge";
 import { StaffTable } from "./StaffTable";
 import { StatusTimeline } from "./StatusTimeline";
+import { VerifyOnChainStatus } from "./VerifyOnChainStatus";
 import { formatDate, formatDateTime, truncateMiddle } from "./format";
 import {
   PROVIDER_STATUS_CODE,
@@ -126,52 +128,58 @@ export function ProviderDetail({ provider, history, staff, backHref }: ProviderD
 
         <div className="flex flex-col gap-5">
           <SectionCard title="On-chain status">
-            {provider.onChainStatus ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <ProviderStatusBadge status={provider.onChainStatus} />
-                  <span className="font-mono text-xs text-foreground/50">
-                    ProviderRegistry status {PROVIDER_STATUS_CODE[provider.onChainStatus]}
-                  </span>
-                </div>
+            <div className="flex flex-col gap-4">
+              <OnChainSyncStatus provider={provider} />
 
-                <dl className="flex flex-col gap-4">
-                  <DetailField
-                    label="Last synced"
-                    value={formatDateTime(provider.onChainSyncedAt)}
-                  />
-                  {provider.lastTxHash && (
+              {provider.onChainStatus ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ProviderStatusBadge status={provider.onChainStatus} />
+                    <span className="font-mono text-xs text-foreground/50">
+                      ProviderRegistry status {PROVIDER_STATUS_CODE[provider.onChainStatus]}
+                    </span>
+                  </div>
+
+                  <dl className="flex flex-col gap-4">
                     <DetailField
-                      label="Last transaction"
-                      mono
-                      value={
-                        <a
-                          href={stellarTxUrl(provider.lastTxHash)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-locka-cyan hover:underline"
-                        >
-                          {shortTxHash(provider.lastTxHash)}
-                        </a>
-                      }
+                      label="Last synced"
+                      value={formatDateTime(provider.onChainSyncedAt)}
                     />
-                  )}
-                </dl>
+                    {provider.lastTxHash && (
+                      <DetailField
+                        label="Last transaction"
+                        mono
+                        value={
+                          <a
+                            href={stellarTxUrl(provider.lastTxHash)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-locka-cyan hover:underline"
+                          >
+                            {shortTxHash(provider.lastTxHash)}
+                          </a>
+                        }
+                      />
+                    )}
+                  </dl>
 
-                {provider.onChainStatus !== provider.status && (
-                  <p className="rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-3 py-2 text-xs text-brand-amber">
-                    The registry still reads {PROVIDER_STATUS_LABEL[provider.onChainStatus]} while
-                    this application is {PROVIDER_STATUS_LABEL[provider.status]} — the transaction
-                    may still be settling.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-foreground/50">
-                Not recorded in the ProviderRegistry yet. Approving this application writes the
-                provider&apos;s verified status on-chain.
-              </p>
-            )}
+                  {provider.onChainStatus !== provider.status && (
+                    <p className="rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-3 py-2 text-xs text-brand-amber">
+                      The registry still reads {PROVIDER_STATUS_LABEL[provider.onChainStatus]} while
+                      this application is {PROVIDER_STATUS_LABEL[provider.status]} — the transaction
+                      may still be settling.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-foreground/50">
+                  Not recorded in the ProviderRegistry yet. Approving this application writes the
+                  provider&apos;s verified status on-chain.
+                </p>
+              )}
+
+              <VerifyOnChainStatus walletAddress={provider.walletAddress} />
+            </div>
           </SectionCard>
 
           <SectionCard title="History" description="Every decision recorded against this provider.">
