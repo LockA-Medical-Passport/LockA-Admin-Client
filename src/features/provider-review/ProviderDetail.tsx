@@ -135,7 +135,7 @@ export function ProviderDetail({ provider, history, staff, backHref }: ProviderD
                 <>
                   <div className="flex flex-wrap items-center gap-2">
                     <ProviderStatusBadge status={provider.onChainStatus} />
-                    <span className="font-mono text-xs text-foreground/50">
+                    <span className="font-mono text-xs text-foreground/60">
                       ProviderRegistry status {PROVIDER_STATUS_CODE[provider.onChainStatus]}
                     </span>
                   </div>
@@ -172,7 +172,7 @@ export function ProviderDetail({ provider, history, staff, backHref }: ProviderD
                   )}
                 </>
               ) : (
-                <p className="text-sm text-foreground/50">
+                <p className="text-sm text-foreground/60">
                   Not recorded in the ProviderRegistry yet. Approving this application writes the
                   provider&apos;s verified status on-chain.
                 </p>

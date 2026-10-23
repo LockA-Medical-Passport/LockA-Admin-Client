@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 export interface NavbarProps {
   onMenuClick?: () => void;
+  /** Feature-owned controls (e.g. the notification bell), rendered before the wallet state. */
+  notificationsSlot?: ReactNode;
   adminName?: string;
   walletAddress?: string;
   walletConnecting?: boolean;
@@ -19,6 +21,7 @@ function truncateAddress(address: string) {
 
 export function Navbar({
   onMenuClick,
+  notificationsSlot,
   adminName,
   walletAddress,
   walletConnecting = false,
@@ -60,6 +63,7 @@ export function Navbar({
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
+        {notificationsSlot}
         {walletAddress ? (
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-navy-800/60 px-3 py-1.5">
             <span className="size-2 rounded-full bg-brand-green" aria-hidden="true" />
@@ -71,7 +75,7 @@ export function Navbar({
                 type="button"
                 onClick={onDisconnectWallet}
                 aria-label="Disconnect wallet"
-                className="text-foreground/40 hover:text-foreground"
+                className="text-foreground/60 hover:text-foreground"
               >
                 <svg viewBox="0 0 20 20" className="size-3.5" aria-hidden="true">
                   <path

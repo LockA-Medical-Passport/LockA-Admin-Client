@@ -1,5 +1,6 @@
 import { dismissToast, toast } from "@/components/ui";
 import type { FreighterWallet } from "@/features/auth/useFreighterWallet";
+import { DEMO_MODE, DEMO_TX_HASH } from "@/lib/demo-mode";
 import {
   buildDecisionTransaction,
   confirmTransaction,
@@ -111,48 +112,58 @@ export async function submitOnChainDecision(
     return { ok: false, message };
   }
 
-  report("building");
-  let unsignedXdr: string;
-  try {
-    unsignedXdr = await buildDecisionTransaction({
-      action,
-      providerAddress: provider.walletAddress,
-      adminAddress: wallet.publicKey,
-    });
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { message });
-    return { ok: false, message };
-  }
-
-  report("awaiting-signature");
-  const signed = await wallet.signTransaction(unsignedXdr);
-  if (!signed.ok) {
-    report("failed", { message: signed.error });
-    return { ok: false, message: signed.error };
-  }
-
-  report("submitting");
   let txHash: string;
-  try {
-    ({ txHash } = await submitSignedTransaction(signed.signedXdr));
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { message });
-    return { ok: false, message };
-  }
 
-  report("confirming", { txHash });
-  try {
-    const confirmation = await confirmTransaction(txHash);
-    if (confirmation.status === "FAILED") {
-      report("failed", { txHash, message: confirmation.message });
-      return { ok: false, message: confirmation.message };
+  if (DEMO_MODE) {
+    // CI has no Freighter extension and no funded testnet account; the mock locka-api (and its
+    // matching bypass in the decision route) stands in for the on-chain half of the flow.
+    txHash = DEMO_TX_HASH;
+    report("awaiting-signature");
+    report("submitting", { txHash });
+    report("confirming", { txHash });
+  } else {
+    report("building");
+    let unsignedXdr: string;
+    try {
+      unsignedXdr = await buildDecisionTransaction({
+        action,
+        providerAddress: provider.walletAddress,
+        adminAddress: wallet.publicKey,
+      });
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { message });
+      return { ok: false, message };
     }
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { txHash, message });
-    return { ok: false, message };
+
+    report("awaiting-signature");
+    const signed = await wallet.signTransaction(unsignedXdr);
+    if (!signed.ok) {
+      report("failed", { message: signed.error });
+      return { ok: false, message: signed.error };
+    }
+
+    report("submitting");
+    try {
+      ({ txHash } = await submitSignedTransaction(signed.signedXdr));
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { message });
+      return { ok: false, message };
+    }
+
+    report("confirming", { txHash });
+    try {
+      const confirmation = await confirmTransaction(txHash);
+      if (confirmation.status === "FAILED") {
+        report("failed", { txHash, message: confirmation.message });
+        return { ok: false, message: confirmation.message };
+      }
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { txHash, message });
+      return { ok: false, message };
+    }
   }
 
   report("recording", { txHash });

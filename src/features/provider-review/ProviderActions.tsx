@@ -15,7 +15,7 @@ export function ProviderActions({ provider }: { provider: ProviderApplication })
 
   if (actions.length === 0) {
     return (
-      <p className="text-sm text-foreground/50">
+      <p className="text-sm text-foreground/60">
         This provider is revoked — no further registry actions are available.
       </p>
     );

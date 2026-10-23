@@ -78,7 +78,7 @@ export function StaffTable({ providerId, staff }: StaffTableProps) {
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-medium text-foreground">{row.name}</span>
-          {row.email && <span className="text-xs text-foreground/50">{row.email}</span>}
+          {row.email && <span className="text-xs text-foreground/60">{row.email}</span>}
         </div>
       ),
     },

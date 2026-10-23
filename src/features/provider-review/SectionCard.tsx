@@ -18,7 +18,7 @@ export function SectionCard({ title, description, action, className, children }:
           <h2 className="text-sm font-semibold tracking-wide text-foreground/80 uppercase">
             {title}
           </h2>
-          {description && <p className="mt-1 text-sm text-foreground/50">{description}</p>}
+          {description && <p className="mt-1 text-sm text-foreground/60">{description}</p>}
         </div>
         {action}
       </div>
@@ -47,13 +47,13 @@ export function DetailField({ label, value, mono, title, className }: DetailFiel
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <dt className="text-xs font-medium tracking-wide text-foreground/50 uppercase">{label}</dt>
+      <dt className="text-xs font-medium tracking-wide text-foreground/60 uppercase">{label}</dt>
       <dd
         title={title}
         className={cn(
           "text-sm break-words",
           mono && "font-mono text-[13px]",
-          isEmpty ? "text-foreground/40" : "text-foreground",
+          isEmpty ? "text-foreground/60" : "text-foreground",
         )}
       >
         {isEmpty ? EMPTY_VALUE : value}

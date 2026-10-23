@@ -34,7 +34,7 @@ export function Sidebar({
   mobileOpen = false,
   onClose,
 }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   return (
     <>

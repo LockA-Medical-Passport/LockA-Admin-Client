@@ -84,7 +84,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
           type="button"
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute top-4 right-4 rounded-md p-1 text-foreground/50 transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-locka-cyan/50"
+          className="absolute top-4 right-4 rounded-md p-1 text-foreground/60 transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-locka-cyan/50"
         >
           <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
             <path

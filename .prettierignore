@@ -4,3 +4,8 @@ out
 build
 coverage
 package-lock.json
+
+node_modules.bak
+playwright-report
+test-results
+storybook-static

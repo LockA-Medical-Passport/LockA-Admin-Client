@@ -57,7 +57,7 @@ export function DocumentViewer({ providerId, documents }: DocumentViewerProps) {
                 <span className="block truncate text-sm font-medium text-foreground">
                   {document.name}
                 </span>
-                <span className="block text-xs text-foreground/50">
+                <span className="block text-xs text-foreground/60">
                   {[size, document.uploadedAt && formatDate(document.uploadedAt)]
                     .filter(Boolean)
                     .join(" · ") || document.mimeType}

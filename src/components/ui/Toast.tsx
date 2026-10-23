@@ -25,14 +25,23 @@ const VARIANT_ICON_COLOR: Record<ToastVariant, string> = {
   pending: "text-locka-cyan",
 };
 
-function emptyToastList(): ToastItem[] {
-  return [];
+const EMPTY_TOASTS: ToastItem[] = [];
+
+function subscribeMounted() {
+  return () => undefined;
 }
 
 export function Toaster() {
-  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, emptyToastList);
+  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, () => EMPTY_TOASTS);
+  // Rendering a portal during SSR would produce no markup, so the first client render must
+  // match that until hydration has finished (getServerSnapshot returns false for hydration).
+  const mounted = useSyncExternalStore(
+    subscribeMounted,
+    () => true,
+    () => false,
+  );
 
-  if (typeof document === "undefined") return null;
+  if (!mounted) return null;
 
   return createPortal(
     <div
@@ -76,7 +85,7 @@ function ToastCard({ item }: { item: ToastItem }) {
         type="button"
         onClick={() => dismissToast(item.id)}
         aria-label="Dismiss notification"
-        className="shrink-0 text-foreground/40 hover:text-foreground"
+        className="shrink-0 text-foreground/60 hover:text-foreground"
       >
         <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
           <path

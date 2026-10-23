@@ -63,7 +63,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
-            className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-foreground/50"
+            className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-foreground/60"
           >
             <path
               d="M5.5 7.5 10 12l4.5-4.5"
