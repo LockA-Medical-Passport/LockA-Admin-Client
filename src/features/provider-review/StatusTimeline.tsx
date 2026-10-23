@@ -43,13 +43,13 @@ export function StatusTimeline({ entries }: { entries: ProviderHistoryEntry[] })
               <Badge variant={HISTORY_ACTION_VARIANT[entry.action]}>
                 {HISTORY_ACTION_LABEL[entry.action]}
               </Badge>
-              <span className="text-xs text-foreground/50">{formatDateTime(entry.occurredAt)}</span>
+              <span className="text-xs text-foreground/60">{formatDateTime(entry.occurredAt)}</span>
             </div>
 
             <p className="text-sm text-foreground/70">
               {entry.actorName || entry.actorEmail || "System"}
               {entry.actorName && entry.actorEmail && (
-                <span className="text-foreground/40"> · {entry.actorEmail}</span>
+                <span className="text-foreground/60"> · {entry.actorEmail}</span>
               )}
             </p>
 

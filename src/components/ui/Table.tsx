@@ -183,7 +183,7 @@ export function Table<T>({
                 colSpan={columns.length + (selectable ? 1 : 0)}
                 className="px-4 py-12 text-center"
               >
-                {emptyState ?? <span className="text-sm text-foreground/50">No data</span>}
+                {emptyState ?? <span className="text-sm text-foreground/60">No data</span>}
               </td>
             </tr>
           ) : (

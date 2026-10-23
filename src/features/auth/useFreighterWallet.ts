@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "@/components/ui";
+import { DEMO_MODE, DEMO_WALLET_ADDRESS } from "@/lib/demo-mode";
 import { errorMessage } from "@/lib/utils";
 import { connectFreighter, signFreighterTransaction } from "./freighter";
 
@@ -24,6 +25,13 @@ export function useFreighterWallet(): FreighterWallet {
 
   const connect = useCallback(async () => {
     setStatus("connecting");
+
+    if (DEMO_MODE) {
+      setPublicKey(DEMO_WALLET_ADDRESS);
+      setStatus("connected");
+      return;
+    }
+
     try {
       const result = await connectFreighter();
 
@@ -62,6 +70,8 @@ export function useFreighterWallet(): FreighterWallet {
   const signTransaction = useCallback(
     async (unsignedXdr: string): Promise<SignTransactionResult> => {
       if (!publicKey) return { ok: false, error: "Connect your wallet first." };
+
+      if (DEMO_MODE) return { ok: true, signedXdr: unsignedXdr };
 
       try {
         const result = await signFreighterTransaction(unsignedXdr, publicKey);

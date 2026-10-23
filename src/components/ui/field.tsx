@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export const fieldBaseClasses = cn(
   "w-full rounded-lg border border-white/10 bg-navy-800/60 px-3.5 py-2.5 text-sm text-foreground",
-  "placeholder:text-foreground/40",
+  "placeholder:text-foreground/60",
   "transition-colors duration-150",
   "focus:outline-none focus:ring-2 focus:ring-locka-cyan/50 focus:border-locka-cyan/50",
   "disabled:cursor-not-allowed disabled:opacity-50",
@@ -56,7 +56,7 @@ export function FieldWrapper({
           {error}
         </p>
       ) : helperText ? (
-        <p id={`${id}-helper`} className="text-xs text-foreground/50">
+        <p id={`${id}-helper`} className="text-xs text-foreground/60">
           {helperText}
         </p>
       ) : null}

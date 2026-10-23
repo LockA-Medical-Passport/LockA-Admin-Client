@@ -203,7 +203,7 @@ export default function DesignSystemPreview() {
             <Button size="sm" variant="secondary" onClick={() => setTableEmpty((v) => !v)}>
               Toggle empty state
             </Button>
-            <span className="text-xs text-foreground/50">{selectedIds.size} selected</span>
+            <span className="text-xs text-foreground/60">{selectedIds.size} selected</span>
           </div>
           <Table
             columns={COLUMNS}

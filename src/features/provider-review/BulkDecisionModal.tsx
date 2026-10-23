@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Badge, Button, Modal, Textarea, toast } from "@/components/ui";
 import { useWallet } from "@/features/auth/WalletContext";
+import { useNotifications } from "@/features/notifications/NotificationContext";
 import { runBulkDecision, type BulkDecisionProgress, type DecisionProgress } from "./decisions";
 import { TransactionStatus } from "./TransactionStatus";
 import { WalletConnectPrompt } from "./WalletConnectPrompt";
@@ -33,6 +34,7 @@ export function BulkDecisionModal({
   onCompleted,
 }: BulkDecisionModalProps) {
   const wallet = useWallet();
+  const { addNotification } = useNotifications();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("confirm");
@@ -89,6 +91,13 @@ export function BulkDecisionModal({
     } else {
       toast.error(`${succeeded} succeeded, ${failed} failed — see the summary for details`, {
         title: `Bulk ${copy.label.toLowerCase()} partially applied`,
+      });
+      addNotification({
+        id: `transaction:bulk:${Date.now()}`,
+        kind: "transaction",
+        title: `Bulk ${copy.label.toLowerCase()} partially applied`,
+        message: `${succeeded} succeeded and ${failed} failed. Review the bulk results summary.`,
+        href: "/applications",
       });
     }
   }
@@ -188,7 +197,7 @@ export function BulkDecisionModal({
               </li>
             ))}
             {providers.length > preview.length && (
-              <li className="text-foreground/50">and {providers.length - preview.length} more</li>
+              <li className="text-foreground/60">and {providers.length - preview.length} more</li>
             )}
           </ul>
         </div>

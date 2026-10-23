@@ -8,7 +8,7 @@ const VARIANTS = {
     "bg-navy-700/60 text-foreground border border-white/10 hover:bg-navy-600/70 focus-visible:border-white/20",
   success: "bg-brand-green text-navy-950 hover:glow-green focus-visible:glow-green",
   danger:
-    "bg-brand-red text-white hover:shadow-[0_0_0_1px_rgba(239,68,68,0.4),0_0_24px_rgba(239,68,68,0.35)]",
+    "bg-brand-red text-navy-950 hover:shadow-[0_0_0_1px_rgba(239,68,68,0.4),0_0_24px_rgba(239,68,68,0.35)]",
   amber:
     "bg-brand-amber text-navy-950 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.4),0_0_24px_rgba(245,158,11,0.35)]",
 } as const;

@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling backups and test artifacts
+/node_modules.bak
+/playwright-report/
+/test-results/
+/storybook-static/
