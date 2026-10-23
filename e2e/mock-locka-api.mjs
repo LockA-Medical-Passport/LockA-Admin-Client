@@ -187,10 +187,7 @@ function queueFor(url) {
     if (country && country !== "all" && provider.country !== country) return false;
     if (
       q &&
-      ![provider.name, provider.licenseNumber, provider.country]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
+      ![provider.name, provider.licenseNumber, provider.country].join(" ").toLowerCase().includes(q)
     ) {
       return false;
     }
@@ -216,7 +213,9 @@ function summary() {
   });
   return {
     counts,
-    recentActivity: [...auditLog].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 5),
+    recentActivity: [...auditLog]
+      .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+      .slice(0, 5),
   };
 }
 
