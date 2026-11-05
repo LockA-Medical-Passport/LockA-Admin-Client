@@ -20,23 +20,40 @@ jobs:
     # integration for fork PRs.
     if: github.event.pull_request.head.repo.full_name == github.repository
     env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
+      - name: Check Vercel configuration
+        id: vercel
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Vercel secrets are not configured; skipping preview deployment."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.vercel.outputs.configured == 'true'
       - uses: actions/setup-node@v4
+        if: steps.vercel.outputs.configured == 'true'
         with:
           node-version: 20
           cache: npm
       - run: npm ci
+        if: steps.vercel.outputs.configured == 'true'
       - name: Pull Vercel preview environment
-        run: npx vercel@latest pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        if: steps.vercel.outputs.configured == 'true'
+        run: npx vercel@latest pull --yes --environment=preview --token="$VERCEL_TOKEN"
       - name: Build for Vercel
-        run: npx vercel@latest build --token=${{ secrets.VERCEL_TOKEN }}
+        if: steps.vercel.outputs.configured == 'true'
+        run: npx vercel@latest build --token="$VERCEL_TOKEN"
       - name: Deploy preview
         id: deploy
-        run: echo "url=$(npx vercel@latest deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+        if: steps.vercel.outputs.configured == 'true'
+        run: echo "url=$(npx vercel@latest deploy --prebuilt --token=$VERCEL_TOKEN)" >> "$GITHUB_OUTPUT"
       - name: Comment preview URL
+        if: steps.vercel.outputs.configured == 'true'
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.url }}
