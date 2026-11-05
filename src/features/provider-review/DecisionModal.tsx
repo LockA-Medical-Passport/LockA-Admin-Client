@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button, Modal, Textarea, toast } from "@/components/ui";
 import { useWallet } from "@/features/auth/WalletContext";
+import { useNotifications } from "@/features/notifications/NotificationContext";
 import { submitOnChainDecision, type DecisionProgress } from "./decisions";
 import { TransactionStatus } from "./TransactionStatus";
 import { WalletConnectPrompt } from "./WalletConnectPrompt";
@@ -31,6 +32,7 @@ const IDLE_PROGRESS: DecisionProgress = { phase: "idle" };
  */
 export function DecisionModal({ provider, action, onClose, onDecided }: DecisionModalProps) {
   const wallet = useWallet();
+  const { addNotification } = useNotifications();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<DecisionProgress>(IDLE_PROGRESS);
@@ -64,6 +66,13 @@ export function DecisionModal({ provider, action, onClose, onDecided }: Decision
 
     if (!outcome.ok) {
       toast.error(outcome.message, { title: `${label} failed` });
+      addNotification({
+        id: `transaction:${provider.id}:${Date.now()}`,
+        kind: "transaction",
+        title: `${label} failed`,
+        message: `${provider.name}: ${outcome.message}`,
+        href: `/applications/${provider.id}`,
+      });
       return;
     }
 
@@ -71,6 +80,13 @@ export function DecisionModal({ provider, action, onClose, onDecided }: Decision
       // The on-chain write is real and confirmed, but recording the reason didn't stick — this
       // needs the admin's attention, so it isn't reported as a clean success.
       toast.error(outcome.warning, { title: "Confirmed, but the note wasn't saved" });
+      addNotification({
+        id: `transaction:${provider.id}:${outcome.txHash}`,
+        kind: "transaction",
+        title: "Confirmed on-chain, note not saved",
+        message: `${provider.name}: ${outcome.warning}`,
+        href: `/applications/${provider.id}`,
+      });
     } else {
       toast.success(`${provider.name} is now ${PROVIDER_STATUS_LABEL[copy.resultingStatus]}`, {
         title: decisionSuccessMessage(action, provider.status),

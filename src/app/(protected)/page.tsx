@@ -1,17 +1,30 @@
-export default function Home() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-      <h1 className="text-2xl font-semibold text-foreground">LockA Admin Client</h1>
-      <p className="max-w-md text-sm text-foreground/70">
-        Scaffold in progress — see{" "}
-        <a
-          href="https://github.com/LockA-Medical-Passport/LockA-Admin-Client/issues"
-          className="text-locka-cyan hover:underline"
-        >
-          open issues
-        </a>{" "}
-        for what&apos;s being built next.
-      </p>
-    </div>
-  );
+import { redirect } from "next/navigation";
+import { LockaApiError } from "@/lib/locka-api";
+import { getSession } from "@/features/auth/session";
+import { getDashboardSummary } from "@/features/dashboard/api";
+import { DashboardView } from "@/features/dashboard/DashboardView";
+import type { DashboardSummary } from "@/features/dashboard/types";
+import { LoadErrorState } from "@/features/provider-review/LoadErrorState";
+
+export default async function DashboardPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  let summary: DashboardSummary;
+  try {
+    summary = await getDashboardSummary(session.token);
+  } catch (error) {
+    return (
+      <LoadErrorState
+        title="Couldn't load the dashboard"
+        message={
+          error instanceof LockaApiError
+            ? error.message
+            : "Something went wrong loading the application summary."
+        }
+      />
+    );
+  }
+
+  return <DashboardView summary={summary} />;
 }

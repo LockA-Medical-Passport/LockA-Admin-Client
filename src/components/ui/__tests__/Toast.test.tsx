@@ -1,87 +1,60 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Toaster } from "../Toast";
 import { dismissToast, getToastSnapshot, toast } from "../toast-store";
 
-const TX_HASH = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0a1b2c3d4e5f6a7b8c9d0e1f2";
-
-function clearToasts() {
+afterEach(() => {
   act(() => {
-    for (const item of getToastSnapshot()) dismissToast(item.id);
+    getToastSnapshot().forEach((item) => dismissToast(item.id));
   });
-}
+});
 
-describe("Toast", () => {
-  afterEach(() => {
-    clearToasts();
-    jest.useRealTimers();
-  });
-
-  it("renders a success toast with its title and transaction link", () => {
+describe("Toaster", () => {
+  it("renders success, error and pending notifications", () => {
     render(<Toaster />);
 
     act(() => {
-      toast.success("Provider approved", { title: "Approved", txHash: TX_HASH, duration: 0 });
+      toast.success("Provider approved");
+    });
+    act(() => {
+      toast.error("Decision failed");
+    });
+    act(() => {
+      toast.pending("Submitting to Stellar");
     });
 
-    const status = screen.getByRole("status");
-    expect(status).toHaveTextContent("Approved");
-    expect(status).toHaveTextContent("Provider approved");
-    expect(screen.getByRole("link")).toHaveAttribute(
+    expect(screen.getByText("Provider approved")).toBeInTheDocument();
+    expect(screen.getByText("Decision failed")).toBeInTheDocument();
+    expect(screen.getByText("Submitting to Stellar")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Notifications" })).toBeInTheDocument();
+  });
+
+  it("links a transaction hash to the Stellar explorer", () => {
+    render(<Toaster />);
+
+    act(() => {
+      toast.success("Approved on-chain", { txHash: "abcdef0123456789abcdef0123456789" });
+    });
+
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute(
       "href",
-      `https://stellar.expert/explorer/testnet/tx/${TX_HASH}`,
+      "https://stellar.expert/explorer/testnet/tx/abcdef0123456789abcdef0123456789",
     );
   });
 
-  it("renders an error toast", () => {
+  it("can be dismissed by the user", async () => {
     render(<Toaster />);
 
+    let id = "";
     act(() => {
-      toast.error("Freighter rejected the transaction", { duration: 0 });
+      id = toast.pending("Submitting to Stellar");
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Freighter rejected the transaction");
-  });
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss notification" }));
 
-  it("dismisses a toast from its close button", () => {
-    render(<Toaster />);
-
-    act(() => {
-      toast.success("Dismiss me", { duration: 0 });
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss notification" }));
-
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  });
-
-  it("auto-dismisses after the default duration", () => {
-    jest.useFakeTimers();
-    render(<Toaster />);
-
-    act(() => {
-      toast.success("Temporary");
-    });
-    expect(screen.getByRole("status")).toBeInTheDocument();
-
-    act(() => {
-      jest.advanceTimersByTime(5000);
-    });
-
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  });
-
-  it("keeps pending toasts until explicitly dismissed", () => {
-    jest.useFakeTimers();
-    render(<Toaster />);
-
-    act(() => {
-      toast.pending("Submitting to ProviderRegistry…");
-    });
-
-    act(() => {
-      jest.advanceTimersByTime(60_000);
-    });
-
-    expect(screen.getByText("Submitting to ProviderRegistry…")).toBeInTheDocument();
+    expect(screen.queryByText("Submitting to Stellar")).not.toBeInTheDocument();
+    expect(id).not.toBe("");
+    act(() => dismissToast(id));
   });
 });

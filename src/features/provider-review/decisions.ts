@@ -1,6 +1,6 @@
 import { dismissToast, toast } from "@/components/ui";
 import type { FreighterWallet } from "@/features/auth/useFreighterWallet";
-import { isE2eTestMode } from "@/lib/e2e";
+import { DEMO_MODE, DEMO_TX_HASH } from "@/lib/demo-mode";
 import {
   buildDecisionTransaction,
   confirmTransaction,
@@ -112,14 +112,17 @@ export async function submitOnChainDecision(
     return { ok: false, message };
   }
 
-  report("building");
   let txHash: string;
 
-  if (isE2eTestMode) {
-    // The E2E suite has no Soroban network or Freighter signer. It still exercises the off-chain
-    // decision path and the UI state transition; see src/lib/e2e.ts for the guardrails.
-    txHash = "e".repeat(64);
+  if (DEMO_MODE) {
+    // CI has no Freighter extension and no funded testnet account; the mock locka-api (and its
+    // matching bypass in the decision route) stands in for the on-chain half of the flow.
+    txHash = DEMO_TX_HASH;
+    report("awaiting-signature");
+    report("submitting", { txHash });
+    report("confirming", { txHash });
   } else {
+    report("building");
     let unsignedXdr: string;
     try {
       unsignedXdr = await buildDecisionTransaction({

@@ -30,7 +30,7 @@ export function LoginForm() {
         return;
       }
 
-      const redirectTo = searchParams.get("from") || "/";
+      const redirectTo = searchParams?.get("from") || "/";
       router.push(redirectTo);
       router.refresh();
     } catch {

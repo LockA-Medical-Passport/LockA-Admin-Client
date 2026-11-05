@@ -21,18 +21,18 @@ For local development, copy `.env.example` to `.env.local` and fill in the value
 
 ## Optional variables
 
-| Variable                     | Description                                                                               |
-| ---------------------------- | ----------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SENTRY_DSN`     | Enables error monitoring in production builds                                             |
-| `SENTRY_ORG`                 | Sentry organization slug (build-time source map upload)                                   |
-| `SENTRY_PROJECT`             | Sentry project slug (build-time source map upload)                                        |
-| `SENTRY_AUTH_TOKEN`          | Sentry auth token; when absent, source maps are not uploaded and the build still succeeds |
-| `NEXT_PUBLIC_E2E_TEST_MODE`  | E2E-only chain bypass. **Never set to `1` outside the Playwright suite.**                 |
-| `E2E_PORT` / `MOCK_API_PORT` | Port overrides for the Playwright web servers (defaults `3100` / `4100`)                  |
+| Variable                 | Description                                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Enables error monitoring in production builds                                             |
+| `SENTRY_ORG`             | Sentry organization slug (build-time source map upload)                                   |
+| `SENTRY_PROJECT`         | Sentry project slug (build-time source map upload)                                        |
+| `SENTRY_AUTH_TOKEN`      | Sentry auth token; when absent, source maps are not uploaded and the build still succeeds |
+| `NEXT_PUBLIC_DEMO_MODE`  | E2E-only Freighter/Soroban bypass. Ignored when `NODE_ENV=production`.                    |
 
-`NEXT_PUBLIC_E2E_TEST_MODE=1` skips the real Soroban transaction submission/confirmation and
-accepts a synthetic transaction hash in the decision route. It exists only so CI can exercise the
-approval UI without a wallet or network. Deployed environments must leave it unset.
+`NEXT_PUBLIC_DEMO_MODE=1` skips the real Soroban transaction submission/confirmation, accepts a
+synthetic transaction hash in the decision route, and stubs the Freighter signer. It exists only so
+CI can exercise the approval UI without a wallet or network. It is also gated on
+`NODE_ENV !== "production"`, so deployed environments can leave it unset.
 
 ## Development, staging, and production
 
@@ -42,7 +42,7 @@ approval UI without a wallet or network. Deployed environments must leave it uns
 | Stellar network  | testnet                                    | testnet                                     | mainnet passphrase + mainnet Soroban RPC |
 | ProviderRegistry | testnet contract or placeholder to build   | testnet contract                            | production contract                      |
 | Sentry           | disabled (no DSN)                          | enabled with staging DSN, lower sample rate | enabled with production DSN              |
-| E2E test mode    | only during `npm run test:e2e`             | never                                       | never                                    |
+| Demo mode        | only during `npm run test:e2e`             | never                                       | never                                    |
 | `npm run build`  | requires all required `NEXT_PUBLIC_*` vars | same                                        | same                                     |
 
 Keep separate Vercel projects or separate environment scopes for staging and production. Vercel

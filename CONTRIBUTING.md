@@ -49,14 +49,15 @@ npm run build
 
 Run `npm run test:e2e` when your change touches authentication, provider review, wallet
 transactions, or shared UI used by those flows. The E2E suite starts its own mock API and
-production server; no real backend, Freighter extension, or Stellar network is required.
+development server; no real backend, Freighter extension, or Stellar network is required.
 
 ## Testing notes
 
 - Unit tests live next to the component under `__tests__/` and use React Testing Library.
-- Playwright specs live in `e2e/`. Ports can be overridden with `E2E_PORT` and `MOCK_API_PORT`.
-- The E2E-only chain bypass is `NEXT_PUBLIC_E2E_TEST_MODE=1` (see `src/lib/e2e.ts`). Never set it
-  in a deployed environment.
+- Playwright specs live in `e2e/`. The app and mock API run on ports `3000` and `4000`.
+- E2E runs with `NEXT_PUBLIC_DEMO_MODE=1` (see `src/lib/demo-mode.ts`), which replaces Freighter
+  and Soroban only. It is additionally gated on `NODE_ENV !== "production"`, so never set it in a
+  deployed environment.
 - Accessibility is part of the suite: axe runs against login, the provider queue, provider detail,
   and the decision dialog. Keep new interactive UI keyboard accessible and WCAG AA contrast-safe.
 

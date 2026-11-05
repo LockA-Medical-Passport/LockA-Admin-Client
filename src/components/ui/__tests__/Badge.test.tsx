@@ -1,23 +1,26 @@
 import { render, screen } from "@testing-library/react";
-import { Badge, type BadgeVariant } from "../Badge";
-
-const VARIANTS: BadgeVariant[] = ["green", "amber", "red", "cyan", "gray"];
+import { Badge } from "../Badge";
 
 describe("Badge", () => {
-  it.each(VARIANTS)("renders the %s variant", (variant) => {
-    render(<Badge variant={variant}>{variant}</Badge>);
+  it("defaults to the gray variant", () => {
+    render(<Badge>Draft</Badge>);
 
-    expect(screen.getByText(variant)).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toHaveClass("text-foreground/70");
   });
 
-  it("defaults to the gray variant", () => {
-    render(<Badge>Unknown</Badge>);
+  it("uses the status-specific colour for each variant", () => {
+    const { rerender } = render(<Badge variant="green">Verified</Badge>);
+    expect(screen.getByText("Verified")).toHaveClass("text-brand-green");
 
-    expect(screen.getByText("Unknown")).toHaveClass("bg-white/10");
+    rerender(<Badge variant="red">Rejected</Badge>);
+    expect(screen.getByText("Rejected")).toHaveClass("text-red-300");
+
+    rerender(<Badge variant="amber">Suspended</Badge>);
+    expect(screen.getByText("Suspended")).toHaveClass("text-brand-amber");
   });
 
   it("hides the decorative status dot from assistive technology", () => {
-    const { container } = render(<Badge variant="green">Verified</Badge>);
+    const { container } = render(<Badge variant="cyan">Invited</Badge>);
 
     expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
   });

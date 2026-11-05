@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { Button, EmptyState, Table, type TableColumn } from "@/components/ui";
+import { QueueLiveStatus } from "@/features/realtime/QueueLiveStatus";
 import { cn } from "@/lib/utils";
 import { BulkDecisionModal } from "./BulkDecisionModal";
 import { ProviderStatusBadge } from "./ProviderStatusBadge";
@@ -127,6 +128,9 @@ export function ProviderQueueView({ page, query }: ProviderQueueViewProps) {
           <p className="text-sm text-foreground/60">
             Review health provider registrations and record decisions in the ProviderRegistry.
           </p>
+          <div className="mt-2">
+            <QueueLiveStatus />
+          </div>
         </div>
       </div>
 

@@ -27,23 +27,19 @@ const VARIANT_ICON_COLOR: Record<ToastVariant, string> = {
 
 const EMPTY_TOASTS: ToastItem[] = [];
 
-function getServerToastSnapshot(): ToastItem[] {
-  return EMPTY_TOASTS;
-}
-
-const subscribeNoop = () => () => {};
-const getClientMounted = () => true;
-const getServerMounted = () => false;
-
-function useMounted() {
-  return useSyncExternalStore(subscribeNoop, getClientMounted, getServerMounted);
+function subscribeMounted() {
+  return () => undefined;
 }
 
 export function Toaster() {
-  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, getServerToastSnapshot);
-  // A portal can only exist after mounting. Rendering it during SSR/hydration would mismatch
-  // the server's null output (and React would regenerate the whole tree).
-  const mounted = useMounted();
+  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, () => EMPTY_TOASTS);
+  // Rendering a portal during SSR would produce no markup, so the first client render must
+  // match that until hydration has finished (getServerSnapshot returns false for hydration).
+  const mounted = useSyncExternalStore(
+    subscribeMounted,
+    () => true,
+    () => false,
+  );
 
   if (!mounted) return null;
 
@@ -89,7 +85,7 @@ function ToastCard({ item }: { item: ToastItem }) {
         type="button"
         onClick={() => dismissToast(item.id)}
         aria-label="Dismiss notification"
-        className="shrink-0 text-foreground/40 hover:text-foreground"
+        className="shrink-0 text-foreground/60 hover:text-foreground"
       >
         <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
           <path

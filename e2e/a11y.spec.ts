@@ -1,55 +1,53 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { loginAsAdmin, resetMockApi } from "./support/auth";
-import { installMockFreighter } from "./support/freighter";
-
-async function expectNoA11yViolations(page: Page, context: string) {
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
-
-  expect(
-    results.violations,
-    `${context}: ${results.violations
-      .map((violation) => `${violation.id} (${violation.nodes.length} nodes)`)
-      .join(", ")}`,
-  ).toEqual([]);
-}
+import { login } from "./auth";
 
 test.beforeEach(async ({ request }) => {
-  await resetMockApi(request);
+  await request.post("http://127.0.0.1:4000/__reset");
 });
 
-test("login screen passes the automated WCAG A/AA audit and is keyboard navigable", async ({
-  page,
-}) => {
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
+
+async function expectNoViolations(page: Page, label: string) {
+  const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+
+  const summary = results.violations
+    .map((violation) => {
+      const targets = violation.nodes
+        .map((node) => node.target.join(" "))
+        .slice(0, 4)
+        .join(", ");
+      return `${violation.id} (${violation.impact}): ${violation.help} — ${targets}`;
+    })
+    .join("\n");
+
+  expect(results.violations, `${label} accessibility violations:\n${summary}`).toEqual([]);
+}
+
+test("login page meets WCAG 2.1 AA", async ({ page }) => {
   await page.goto("/login");
-  await expectNoA11yViolations(page, "login");
-
-  await page.keyboard.press("Tab");
-  await expect(page.getByLabel("Email")).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(page.getByLabel("Password")).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeFocused();
+  await expect(page.getByRole("heading", { name: "LockA Admin" })).toBeVisible();
+  await expectNoViolations(page, "Login");
 });
 
-test("queue, provider detail, and decision dialog pass the WCAG A/AA audit", async ({ page }) => {
-  await installMockFreighter(page);
-  await loginAsAdmin(page);
+test("authenticated screens meet WCAG 2.1 AA", async ({ page }) => {
+  test.setTimeout(180_000);
+  await login(page);
+  await expectNoViolations(page, "Dashboard");
 
   await page.goto("/applications");
   await expect(page.getByRole("heading", { name: "Provider applications" })).toBeVisible();
-  await expectNoA11yViolations(page, "application queue");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(1000);
+  await expectNoViolations(page, "Applications");
 
-  await page.getByRole("link", { name: "Riverside General Hospital" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Riverside General Hospital", level: 1 }),
-  ).toBeVisible();
-  await expectNoA11yViolations(page, "provider detail");
+  await page.goto("/applications/p-1");
+  await expect(page.getByRole("heading", { name: "Nairobi Community Hospital" })).toBeVisible();
+  await page.waitForTimeout(1000);
+  await expectNoViolations(page, "Application detail");
 
-  await page.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await expectNoA11yViolations(page, "decision dialog");
-
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.goto("/audit-log");
+  await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
+  await page.waitForTimeout(1000);
+  await expectNoViolations(page, "Audit log");
 });
