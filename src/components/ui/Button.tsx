@@ -3,10 +3,13 @@ import { cn } from "@/lib/utils";
 import { Spinner } from "./Spinner";
 
 const VARIANTS = {
-  primary: "bg-brand-blue text-white hover:glow-blue focus-visible:glow-blue",
+  // locka-blue rather than brand-blue: white on #3b82f6 is only 3.67:1, below WCAG AA for
+  // this text size; white on #0066ff is 4.83:1.
+  primary: "bg-locka-blue text-white hover:glow-blue focus-visible:glow-blue",
   secondary:
     "bg-navy-700/60 text-foreground border border-white/10 hover:bg-navy-600/70 focus-visible:border-white/20",
   success: "bg-brand-green text-navy-950 hover:glow-green focus-visible:glow-green",
+  // white on #ef4444 is 3.76:1; navy-950 on it is 5.36:1.
   danger:
     "bg-brand-red text-navy-950 hover:shadow-[0_0_0_1px_rgba(239,68,68,0.4),0_0_24px_rgba(239,68,68,0.35)]",
   amber:

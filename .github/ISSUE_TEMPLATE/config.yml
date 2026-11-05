@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Platform documentation
+    url: https://github.com/LockA-Medical-Passport/LockA-Documentation/blob/main/Documentation.md
+    about: Product and platform architecture for the LockA Medical Passport.
+  - name: Security reports
+    url: https://github.com/LockA-Medical-Passport/LockA-Admin-Client/security/advisories/new
+    about: Please report vulnerabilities privately instead of opening a public issue.
