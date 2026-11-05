@@ -188,7 +188,7 @@ export function BulkDecisionModal({
               </li>
             ))}
             {providers.length > preview.length && (
-              <li className="text-foreground/50">and {providers.length - preview.length} more</li>
+              <li className="text-foreground/55">and {providers.length - preview.length} more</li>
             )}
           </ul>
         </div>

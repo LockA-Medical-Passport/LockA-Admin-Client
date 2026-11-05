@@ -1,5 +1,6 @@
 import { dismissToast, toast } from "@/components/ui";
 import type { FreighterWallet } from "@/features/auth/useFreighterWallet";
+import { isE2eTestMode } from "@/lib/e2e";
 import {
   buildDecisionTransaction,
   confirmTransaction,
@@ -112,47 +113,54 @@ export async function submitOnChainDecision(
   }
 
   report("building");
-  let unsignedXdr: string;
-  try {
-    unsignedXdr = await buildDecisionTransaction({
-      action,
-      providerAddress: provider.walletAddress,
-      adminAddress: wallet.publicKey,
-    });
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { message });
-    return { ok: false, message };
-  }
-
-  report("awaiting-signature");
-  const signed = await wallet.signTransaction(unsignedXdr);
-  if (!signed.ok) {
-    report("failed", { message: signed.error });
-    return { ok: false, message: signed.error };
-  }
-
-  report("submitting");
   let txHash: string;
-  try {
-    ({ txHash } = await submitSignedTransaction(signed.signedXdr));
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { message });
-    return { ok: false, message };
-  }
 
-  report("confirming", { txHash });
-  try {
-    const confirmation = await confirmTransaction(txHash);
-    if (confirmation.status === "FAILED") {
-      report("failed", { txHash, message: confirmation.message });
-      return { ok: false, message: confirmation.message };
+  if (isE2eTestMode) {
+    // The E2E suite has no Soroban network or Freighter signer. It still exercises the off-chain
+    // decision path and the UI state transition; see src/lib/e2e.ts for the guardrails.
+    txHash = "e".repeat(64);
+  } else {
+    let unsignedXdr: string;
+    try {
+      unsignedXdr = await buildDecisionTransaction({
+        action,
+        providerAddress: provider.walletAddress,
+        adminAddress: wallet.publicKey,
+      });
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { message });
+      return { ok: false, message };
     }
-  } catch (error) {
-    const message = error instanceof SorobanError ? error.message : errorMessage(error);
-    report("failed", { txHash, message });
-    return { ok: false, message };
+
+    report("awaiting-signature");
+    const signed = await wallet.signTransaction(unsignedXdr);
+    if (!signed.ok) {
+      report("failed", { message: signed.error });
+      return { ok: false, message: signed.error };
+    }
+
+    report("submitting");
+    try {
+      ({ txHash } = await submitSignedTransaction(signed.signedXdr));
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { message });
+      return { ok: false, message };
+    }
+
+    report("confirming", { txHash });
+    try {
+      const confirmation = await confirmTransaction(txHash);
+      if (confirmation.status === "FAILED") {
+        report("failed", { txHash, message: confirmation.message });
+        return { ok: false, message: confirmation.message };
+      }
+    } catch (error) {
+      const message = error instanceof SorobanError ? error.message : errorMessage(error);
+      report("failed", { txHash, message });
+      return { ok: false, message };
+    }
   }
 
   report("recording", { txHash });

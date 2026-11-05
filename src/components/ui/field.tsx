@@ -56,7 +56,7 @@ export function FieldWrapper({
           {error}
         </p>
       ) : helperText ? (
-        <p id={`${id}-helper`} className="text-xs text-foreground/50">
+        <p id={`${id}-helper`} className="text-xs text-foreground/55">
           {helperText}
         </p>
       ) : null}

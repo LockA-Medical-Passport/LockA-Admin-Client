@@ -25,14 +25,27 @@ const VARIANT_ICON_COLOR: Record<ToastVariant, string> = {
   pending: "text-locka-cyan",
 };
 
-function emptyToastList(): ToastItem[] {
-  return [];
+const EMPTY_TOASTS: ToastItem[] = [];
+
+function getServerToastSnapshot(): ToastItem[] {
+  return EMPTY_TOASTS;
+}
+
+const subscribeNoop = () => () => {};
+const getClientMounted = () => true;
+const getServerMounted = () => false;
+
+function useMounted() {
+  return useSyncExternalStore(subscribeNoop, getClientMounted, getServerMounted);
 }
 
 export function Toaster() {
-  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, emptyToastList);
+  const toasts = useSyncExternalStore(subscribeToasts, getToastSnapshot, getServerToastSnapshot);
+  // A portal can only exist after mounting. Rendering it during SSR/hydration would mismatch
+  // the server's null output (and React would regenerate the whole tree).
+  const mounted = useMounted();
 
-  if (typeof document === "undefined") return null;
+  if (!mounted) return null;
 
   return createPortal(
     <div

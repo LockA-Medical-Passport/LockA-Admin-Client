@@ -63,6 +63,46 @@ how the codebase is organized, and [issues.md](issues.md) (or the
 [issue tracker](https://github.com/LockA-Medical-Passport/LockA-Admin-Client/issues)) for the
 build-out roadmap.
 
+## Testing and quality
+
+```bash
+npm test                  # Jest + React Testing Library
+npm run test:coverage     # unit test coverage report
+npm run test:e2e          # Playwright against a mock locka-api and production build
+npm run lint              # ESLint
+npm run typecheck         # TypeScript, no emit
+npm run build             # production build
+```
+
+The E2E suite starts a mock `locka-api` and a production build of this app automatically. It does
+not need a real backend, Freighter extension, or Stellar network. See
+[docs/environments.md](docs/environments.md) for the E2E-only chain bypass and all environment
+variables.
+
+Axe accessibility checks run against the login screen, provider queue, provider detail, and
+decision dialog as part of the Playwright suite.
+
+## Component documentation
+
+Interactive component docs are available through Storybook:
+
+```bash
+npm run storybook         # http://localhost:6006
+npm run build-storybook   # static build in storybook-static/
+```
+
+## Deployment and monitoring
+
+Preview deployments, environment separation, and Sentry error monitoring are documented in
+[docs/environments.md](docs/environments.md). Sentry is disabled outside production builds and
+scrubs request, user, and breadcrumb data before sending events.
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, commit/PR conventions, the label
+taxonomy, and test commands. All participants are expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

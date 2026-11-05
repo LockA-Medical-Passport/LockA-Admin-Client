@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isE2eTestMode } from "@/lib/e2e";
 import { lockaApiErrorResponse } from "@/lib/locka-api";
 import { wasTransactionSuccessful } from "@/lib/soroban/provider-registry";
 import { requireSession } from "@/features/auth/guard";
@@ -46,7 +47,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  if (!(await wasTransactionSuccessful(txHash))) {
+  // The E2E suite has no Soroban network to confirm against; see src/lib/e2e.ts.
+  if (!isE2eTestMode && !(await wasTransactionSuccessful(txHash))) {
     return NextResponse.json(
       { message: "That transaction hash wasn't found as a successful transaction on the network" },
       { status: 422 },
