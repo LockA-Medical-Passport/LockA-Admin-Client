@@ -33,7 +33,7 @@ jobs:
             echo "::notice::Vercel secrets are not configured; skipping preview deployment."
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.vercel.outputs.configured == 'true'
       - uses: actions/setup-node@v4
         if: steps.vercel.outputs.configured == 'true'
